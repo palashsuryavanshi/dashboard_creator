@@ -1,0 +1,31 @@
+{
+  "name": "c6e02111722e3a0310b308bf",
+  "version": "1.0.0",
+  "description": "Dashboard creator with Excel data import",
+  "main": "index.js",
+  "homepage": "https://palashsuryavanshi.github.io/dashboard_creator",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["dashboard", "charts", "excel", "react"],
+  "author": "Palash Suryavanshi",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "chart.js": "^4.6.1",
+    "exceljs": "^4.4.0",
+    "react": "^19.3.1",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "vite": "^8.3.5"
+  }
+}
