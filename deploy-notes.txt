@@ -1,0 +1,8 @@
+# deploy notes
+- build: VITE_CONFIG_NATIVE_IGNORE_WARNING=true npx vite build  -> dist/ ok
+- git subtree push --prefix=dist origin main: no changes on subtree because dist/ not added as subtree yet. 
+- actual deployment plan: 
+  1. add dist/ as subtree commit onto main: git subtree add --prefix=dist main or subtree split then push.
+  2. simpler: do not use subtree; use GitHub Pages from branch main root; then no subtree needed.
+  3. simplest final step: push main with dist/ contents if you want static site on main. otherwise configure pages to serve root from main.
+- current remote origin/main already matches local HEAD, so no new revisions on subtree push.
