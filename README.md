@@ -73,8 +73,5 @@ Planned features for upcoming releases:
 - **[Chart Export]** - Export charts as PNG or SVG images
 - **[Multiple Datasets]** - Support for more than 2 columns from Excel
 - **[Saved Dashboards]** - User accounts to save and load dashboard configurations
-- **[API Integration]** - Backend API for chart data persistence
-- **[Authentication]** - Sign in with Freebuff or OAuth
-- **[Real-time Updates]** - Live data updates via WebSockets
 - **[Additional Chart Types]** - Radar, Polar, and Gauge charts
 - **[Theme Support]** - Light/dark mode and custom color schemes
