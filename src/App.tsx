@@ -26,207 +26,236 @@ interface ChartConfig {
   options: any
 }
 
-const useChartData = (type: ChartType, excelHeaders: string[] = []) => {
+interface ExcelColumnMapping {
+  columnName: string
+  chartLabel: string
+  chartType: ChartType
+  datasetIndex: number
+}
+
+interface ExcelImportResult {
+  success: boolean
+  headers: string[]
+  rows: any[]
+  mappings: ExcelColumnMapping[]
+  error?: string
+}
+
+const useChartData = (
+  type: ChartType,
+  headers: string[],
+  rows: any[],
+  mappings: ExcelColumnMapping[]
+) => {
+  // Find mappings for this chart type and dataset index
+  const relevantMappings = mappings.filter(
+    (m) => m.chartType === type
+  )
+
+  // Get dataset data from Excel rows based on column mapping
+  const getDatasetData = (columnName: string, defaultData: number[]) => {
+    const columnMapping = relevantMappings.find((m) => m.columnName === columnName)
+    if (!columnMapping) return defaultData
+
+    // Extract data from the specified column across all rows
+    const columnData: number[] = rows
+      .map((row) => {
+        const value = row[columnName]
+        const num = typeof value === 'number' ? value : parseFloat(value)
+        return isNaN(num) ? 0 : num
+      })
+      .slice(0, 7) // Limit to 7 data points (Jan-Jul)
+
+    // Pad or truncate to match default length
+    while (columnData.length < defaultData.length) {
+      columnData.push(0)
+    }
+    return columnData.slice(0, defaultData.length)
+  }
+
   const baseData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
     datasets: []
   }
 
-  // Map Excel headers to chart data if available, otherwise use defaults
-  const generateDatasets = (headers: string[]) => {
-    if (headers.length >= 2) {
-      // Use first two columns as datasets if Excel data is provided
-      return [
-        {
-          label: headers[0] || 'Dataset 1',
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          borderColor: 'rgba(75, 192, 192, 1)',
-          data: [65, 59, 80, 81, 55, 40, 37],
-          borderWidth: 1
-        },
-        {
-          label: headers[1] || 'Dataset 2',
-          backgroundColor: 'rgba(153, 102, 255, 0.2)',
-          borderColor: 'rgba(153, 102, 255, 1)',
-          data: [28, 48, 40, 19, 86, 27, 90],
-          borderWidth: 1
-        }
+  // Generate datasets based on mappings
+  const generateDatasets = (): any[] => {
+    const datasets: any[] = []
+    const usedColumns = new Set<string>()
+
+    // Add datasets from mappings
+    relevantMappings.forEach((mapping, mappingIndex) => {
+      if (usedColumns.has(mapping.columnName)) return
+
+      const columnData = getDatasetData(mapping.columnName, [65, 59, 80, 81, 55, 40, 37])
+
+      // Determine color based on dataset index
+      const colors = [
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(53, 162, 235, 0.2)',
+        'rgba(255, 159, 64, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
       ]
-    }
-    return [
-      {
+
+      const color = colors[mapping.datasetIndex % colors.length] || 'rgba(75, 192, 192, 0.2)'
+      const borderColor = colors[mapping.datasetIndex % colors.length + 1] || 'rgba(153, 102, 255, 1)'
+
+      let dataset: any
+
+      switch (mapping.chartType) {
+        case 'bar':
+          dataset = {
+            label: mapping.chartLabel || headers[mapping.datasetIndex] || `Dataset ${mapping.datasetIndex + 1}`,
+            backgroundColor: color,
+            borderColor: borderColor,
+            data: columnData,
+            borderWidth: 1
+          }
+          break
+
+        case 'column':
+          dataset = {
+            label: mapping.chartLabel || headers[mapping.datasetIndex] || `Dataset ${mapping.datasetIndex + 1}`,
+            backgroundColor: color,
+            borderColor: borderColor,
+            data: columnData,
+            borderWidth: 1
+          }
+          break
+
+        case 'line':
+          dataset = {
+            label: mapping.chartLabel || headers[mapping.datasetIndex] || `Dataset ${mapping.datasetIndex + 1}`,
+            borderColor: borderColor,
+            backgroundColor: color,
+            data: columnData,
+            fill: false,
+            tension: 0.1
+          }
+          break
+
+        case 'area':
+          dataset = {
+            label: mapping.chartLabel || headers[mapping.datasetIndex] || `Dataset ${mapping.datasetIndex + 1}`,
+            backgroundColor: color,
+            borderColor: borderColor,
+            data: columnData,
+            fill: true,
+            tension: 0.1
+          }
+          break
+
+        case 'pie':
+          // For pie charts, use the first few rows' values
+          const pieValues = columnData.slice(0, 5).map((v, i) => v || 0)
+          dataset = {
+            label: mapping.chartLabel || headers[mapping.datasetIndex] || `Dataset ${mapping.datasetIndex + 1}`,
+            data: pieValues,
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.5)',
+              'rgba(53, 162, 235, 0.5)',
+              'rgba(255, 206, 86, 0.5)',
+              'rgba(75, 192, 192, 0.5)',
+              'rgba(153, 102, 255, 0.5)'
+            ]
+          }
+          break
+
+        case 'doughnut':
+          const doughnutValues = columnData.slice(0, 5).map((v, i) => v || 0)
+          dataset = {
+            label: mapping.chartLabel || headers[mapping.datasetIndex] || `Dataset ${mapping.datasetIndex + 1}`,
+            data: doughnutValues,
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.5)',
+              'rgba(53, 162, 235, 0.5)',
+              'rgba(255, 206, 86, 0.5)',
+              'rgba(75, 192, 192, 0.5)',
+              'rgba(153, 102, 255, 0.5)'
+            ]
+          }
+          break
+
+        case 'funnel':
+          dataset = {
+            label: mapping.chartLabel || headers[mapping.datasetIndex] || `Dataset ${mapping.datasetIndex + 1}`,
+            data: [60, 40, 30, 20, 10] // Fixed funnel data
+          }
+          break
+
+        case 'scatter':
+          dataset = {
+            label: mapping.chartLabel || headers[mapping.datasetIndex] || `Dataset ${mapping.datasetIndex + 1}`,
+            data: columnData.map((v, i) => ({ x: i, y: v })),
+            pointRadius: 5
+          }
+          break
+
+        default:
+          dataset = {
+            label: mapping.chartLabel || headers[mapping.datasetIndex] || `Dataset ${mapping.datasetIndex + 1}`,
+            backgroundColor: color,
+            borderColor: borderColor,
+            data: columnData,
+            borderWidth: 1
+          }
+      }
+
+      usedColumns.add(mapping.columnName)
+      datasets.push(dataset)
+    })
+
+    // If no mappings provided, use default sample data
+    if (datasets.length === 0) {
+      datasets.push({
         label: 'Dataset 1',
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
         borderColor: 'rgba(75, 192, 192, 1)',
         data: [65, 59, 80, 81, 55, 40, 37],
         borderWidth: 1
-      },
-      {
+      })
+      datasets.push({
         label: 'Dataset 2',
         backgroundColor: 'rgba(153, 102, 255, 0.2)',
         borderColor: 'rgba(153, 102, 255, 1)',
         data: [28, 48, 40, 19, 86, 27, 90],
         borderWidth: 1
-      }
-    ]
+      })
+    }
+
+    return datasets
   }
 
-  switch (type) {
-    case 'bar':
-      return {
-        labels: baseData.labels,
-        datasets: generateDatasets(excelHeaders)
-      }
-
-    case 'bar-stack':
-      return {
-        labels: baseData.labels,
-        datasets: generateDatasets(excelHeaders).map((ds: any) => ({
-          ...ds,
-          stack: 'stack1'
-        }))
-      }
-
-    case 'bar-cluster':
-      return {
-        labels: baseData.labels,
-        datasets: generateDatasets(excelHeaders)
-      }
-
-    case 'column':
-      return {
-        labels: baseData.labels,
-        datasets: generateDatasets(excelHeaders)
-      }
-
-    case 'column-stack':
-      return {
-        labels: baseData.labels,
-        datasets: generateDatasets(excelHeaders).map((ds: any) => ({
-          ...ds,
-          stack: 'stack1'
-        }))
-      }
-
-    case 'column-cluster':
-      return {
-        labels: baseData.labels,
-        datasets: generateDatasets(excelHeaders)
-      }
-
-    case 'line':
-      return {
-        labels: baseData.labels,
-        datasets: [
-          { label: excelHeaders[0] || 'Dataset 1', borderColor: 'rgba(75, 192, 192, 1)', backgroundColor: 'rgba(75, 192, 192, 0.2)', data: [65, 59, 80, 81, 55, 40, 37], fill: false, tension: 0.1 },
-          { label: excelHeaders[1] || 'Dataset 2', borderColor: 'rgba(153, 102, 255, 1)', backgroundColor: 'rgba(153, 102, 255, 0.2)', data: [28, 48, 40, 19, 86, 27, 90], fill: false, tension: 0.1 }
-        ]
-      }
-
-    case 'area':
-      return {
-        labels: baseData.labels,
-        datasets: [
-          { label: excelHeaders[0] || 'Dataset 1', backgroundColor: 'rgba(75, 192, 192, 0.3)', borderColor: 'rgba(75, 192, 192, 1)', data: [65, 59, 80, 81, 55, 40, 37], fill: true, tension: 0.1 },
-          { label: excelHeaders[1] || 'Dataset 2', backgroundColor: 'rgba(153, 102, 255, 0.3)', borderColor: 'rgba(153, 102, 255, 1)', data: [28, 48, 40, 19, 86, 27, 90], fill: true, tension: 0.1 }
-        ]
-      }
-
-    case 'area-stack':
-      return {
-        labels: baseData.labels,
-        datasets: [
-          { label: excelHeaders[0] || 'Dataset 1', backgroundColor: 'rgba(75, 192, 192, 0.3)', borderColor: 'rgba(75, 192, 192, 1)', data: [65, 59, 80, 81, 55, 40, 37], fill: true, tension: 0.1, stack: 'stack1' },
-          { label: excelHeaders[1] || 'Dataset 2', backgroundColor: 'rgba(153, 102, 255, 0.3)', borderColor: 'rgba(153, 102, 255, 1)', data: [28, 48, 40, 19, 86, 27, 90], fill: true, tension: 0.1, stack: 'stack1' }
-        ]
-      }
-
-    case 'area-100-stack':
-      return {
-        labels: baseData.labels,
-        datasets: [
-          { label: excelHeaders[0] || 'Dataset 1', backgroundColor: 'rgba(75, 192, 192, 0.3)', borderColor: 'rgba(75, 192, 192, 1)', data: [65, 59, 80, 81, 55, 40, 37], fill: true, tension: 0.1, stack: 'stack1' },
-          { label: excelHeaders[1] || 'Dataset 2', backgroundColor: 'rgba(153, 102, 255, 0.3)', borderColor: 'rgba(153, 102, 255, 1)', data: [28, 48, 40, 19, 86, 27, 90], fill: true, tension: 0.1, stack: 'stack1' }
-        ],
-        options: {
-          scales: {
-            y: { beginAtZero: true, max: 100 }
-          }
-        }
-      }
-
-    case 'combo':
-      return {
-        labels: baseData.labels,
-        datasets: [
-          { type: 'bar' as const, label: excelHeaders[0] || 'Dataset 1', backgroundColor: 'rgba(75, 192, 192, 0.2)', borderColor: 'rgba(75, 192, 192, 1)', data: [65, 59, 80, 81, 55, 40, 37] },
-          { type: 'line' as const, label: excelHeaders[1] || 'Dataset 2', borderColor: 'rgba(153, 102, 255, 1)', backgroundColor: 'rgba(153, 102, 255, 0.2)', data: [28, 48, 40, 19, 86, 27, 90], fill: false, tension: 0.1 }
-        ]
-      }
-
-    case 'combo-variant':
-      return {
-        labels: baseData.labels,
-        datasets: [
-          { type: 'line' as const, label: excelHeaders[0] || 'Dataset 1', borderColor: 'rgba(75, 192, 192, 1)', backgroundColor: 'rgba(75, 192, 192, 0.2)', data: [65, 59, 80, 81, 55, 40, 37], fill: false, tension: 0.1 },
-          { type: 'bar' as const, label: excelHeaders[1] || 'Dataset 2', backgroundColor: 'rgba(153, 102, 255, 0.2)', borderColor: 'rgba(153, 102, 255, 1)', data: [28, 48, 40, 19, 86, 27, 90] }
-        ]
-      }
-
-    case 'funnel':
-      return {
-        labels: ['Stage 1', 'Stage 2', 'Stage 3', 'Stage 4', 'Stage 5'],
-        datasets: [
-          { label: 'Funnel', backgroundColor: ['rgba(255, 99, 132, 0.5)', 'rgba(53, 162, 235, 0.5)', 'rgba(75, 192, 192, 0.5)', 'rgba(153, 102, 255, 0.5)', 'rgba(255, 159, 64, 0.5)'], data: [60, 40, 30, 20, 10] }
-        ]
-      }
-
-    case 'scatter':
-      return {
-        labels: [],
-        datasets: [
-          { label: excelHeaders[0] || 'Dataset 1', backgroundColor: 'rgba(75, 192, 192, 1)', data: [{ x: 1, y: 65 }, { x: 2, y: 59 }, { x: 3, y: 80 }, { x: 4, y: 81 }, { x: 5, y: 55 }], pointRadius: 5 },
-          { label: excelHeaders[1] || 'Dataset 2', backgroundColor: 'rgba(153, 102, 255, 1)', data: [{ x: 1, y: 28 }, { x: 2, y: 48 }, { x: 3, y: 40 }, { x: 4, y: 19 }, { x: 5, y: 86 }], pointRadius: 5 }
-        ]
-      }
-
-    case 'pie':
-      return {
-        labels: excelHeaders.length > 0 ? excelHeaders : ['Red', 'Blue', 'Yellow', 'Green', 'Purple'],
-        datasets: [
-          {
-            data: excelHeaders.length > 0 ? [30, 20, 25, 15, 10] : [300, 50, 100, 40, 120],
-            backgroundColor: excelHeaders.length > 0
-              ? [['rgba(255, 99, 132, 0.5)'], ['rgba(53, 162, 235, 0.5)'], ['rgba(255, 206, 86, 0.5)'], ['rgba(75, 192, 192, 0.5)'], ['rgba(153, 102, 255, 0.5)']]
-              : ['rgba(255, 99, 132, 0.5)', 'rgba(53, 162, 235, 0.5)', 'rgba(255, 206, 86, 0.5)', 'rgba(75, 192, 192, 0.5)', 'rgba(153, 102, 255, 0.5)']
-          }
-        ]
-      }
-
-    case 'doughnut':
-      return {
-        labels: excelHeaders.length > 0 ? excelHeaders : ['Red', 'Blue', 'Yellow', 'Green', 'Purple'],
-        datasets: [
-          {
-            data: excelHeaders.length > 0 ? [30, 20, 25, 15, 10] : [300, 50, 100, 40, 120],
-            backgroundColor: excelHeaders.length > 0
-              ? [['rgba(255, 99, 132, 0.5)'], ['rgba(53, 162, 235, 0.5)'], ['rgba(255, 206, 86, 0.5)'], ['rgba(75, 192, 192, 0.5)'], ['rgba(153, 102, 255, 0.5)']]
-              : ['rgba(255, 99, 132, 0.5)', 'rgba(53, 162, 235, 0.5)', 'rgba(255, 206, 86, 0.5)', 'rgba(75, 192, 192, 0.5)', 'rgba(153, 102, 255, 0.5)']
-          }
-        ]
-      }
-
-    default:
-      return baseData
+  return {
+    labels: baseData.labels,
+    datasets: generateDatasets()
   }
 }
 
-const ChartComponent = ({ type, data, options, excelHeaders }: { type: ChartType; data: any; options: any; excelHeaders: string[] }) => {
-  const chartData = useChartData(type, excelHeaders)
+const ChartComponent = ({
+  type,
+  headers,
+  rows,
+  mappings,
+  excelHeaders
+}: {
+  type: ChartType
+  headers: string[]
+  rows: any[]
+  mappings: ExcelColumnMapping[]
+  excelHeaders: string[]
+}) => {
+  const chartData = useChartData(type, headers, rows, mappings)
 
   return (
     <div className="chart-card">
-      <h3 className="chart-title capitalize-type({type})">{type.replace(/bar|column|line|area|pie|doughnut|funnel|scatter|combo/gi, (m: string) => m.charAt(0).toUpperCase() + m.slice(1))}</h3>
+      <h3 className="chart-title">
+        {type.replace(/bar|column|line|area|pie|doughnut|funnel|scatter|combo/gi, (m: string) =>
+          m.charAt(0).toUpperCase() + m.slice(1))
+        } Chart</h3>
       <canvas
         id="chartjs-{type}"
         width="400"
@@ -234,18 +263,23 @@ const ChartComponent = ({ type, data, options, excelHeaders }: { type: ChartType
         data={chartData}
         options={{
           responsive: true,
-          ...options
+          plugins: {
+            legend: {
+              display: headers.length > 0 || mappings.length > 0
+            }
+          }
         }}
       />
     </div>
   )
-}
-
-const capitalizeType = (type: string) => type.replace(/\b\w/g, (c: string) => c.toUpperCase())
+})
 
 const Dashboard = () => {
-  const [excelImportResult, setExcelImportResult] = useState<{ success: boolean; headers: string[]; rows: any[]; error?: string } | null>(null)
+  const [excelImportResult, setExcelImportResult] = useState<ExcelImportResult | null>(null)
   const [excelHeaders, setExcelHeaders] = useState<string[]>([])
+  const [excelRows, setExcelRows] = useState<any[]>([])
+  const [excelMappings, setExcelMappings] = useState<{ columnName: string; chartLabel: string; chartType: ChartType; datasetIndex: number }[]>([])
+  const [showMappings, setShowMappings] = useState<boolean>(false)
 
   const chartTypes: ChartType[] = [
     'bar', 'bar-stack', 'bar-cluster',
@@ -255,33 +289,162 @@ const Dashboard = () => {
     'funnel', 'scatter', 'pie', 'doughnut'
   ]
 
-  const handleExcelImport = (result: { success: boolean; headers: string[]; rows: any[]; error?: string }) => {
+  const handleExcelImport = (result: ExcelImportResult) => {
     setExcelImportResult(result)
-    if (result.success && result.headers.length > 0) {
+    if (result.success) {
       setExcelHeaders(result.headers)
+      setExcelRows(result.rows)
+      setExcelMappings(result.mappings)
+      setShowMappings(true)
     } else {
       setExcelHeaders([])
+      setExcelRows([])
+      setExcelMappings([])
+      setShowMappings(false)
     }
   }
 
   return (
     <div className="dashboard">
       <h1 className="dashboard-header">Dashboard Creator</h1>
-      <p className="dashboard-subtitle">Select chart types to display data from Excel or sample data</p>
+      <p className="dashboard-subtitle">
+        Select chart types to display data from Excel or sample data
+      </p>
 
       {/* Excel Import Section */}
       <ExcelReader onImport={handleExcelImport} />
+
+      {/* Charts Customization Section */}
+      {excelImportResult?.success && excelMappings.length > 0 && (
+        <div className="customization-section">
+          <h2>🎛️ Chart Customization</h2>
+          <p>Configure how Excel columns map to chart datasets</p>
+          <div className="mapping-controls">
+            {excelMappings.map((mapping, index) => (
+              <div key={index} className="mapping-control">
+                <select
+                  className="mapping-select"
+                  onChange={(e) => {
+                    const newMappings = [...excelMappings]
+                    newMappings[index] = {
+                      ...newMappings[index],
+                      columnName: e.target.value
+                    }
+                    setExcelMappings(newMappings)
+                  }}
+                >
+                  <option value="">-- Map Column --</option>
+                  {excelHeaders.map((header) => (
+                    <option key={header} value={header}>
+                      {header}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  className="mapping-label-input"
+                  defaultValue={mapping.chartLabel}
+                  onChange={(e) => {
+                    const newMappings = [...excelMappings]
+                    newMappings[index] = {
+                      ...newMappings[index],
+                      chartLabel: e.target.value
+                    }
+                    setExcelMappings(newMappings)
+                  }}
+                  placeholder="Label"
+                />
+                <select
+                  className="mapping-chart-type-select"
+                  onChange={(e) => {
+                    const newMappings = [...excelMappings]
+                    newMappings[index] = {
+                      ...newMappings[index],
+                      chartType: e.target.value as ChartType
+                    }
+                    setExcelMappings(newMappings)
+                  }}
+                >
+                  <option value="bar">Bar</option>
+                  <option value="column">Column</option>
+                  <option value="line">Line</option>
+                  <option value="area">Area</option>
+                  <option value="pie">Pie</option>
+                  <option value="doughnut">Doughnut</option>
+                  <option value="funnel">Funnel</option>
+                  <option value="scatter">Scatter</option>
+                </select>
+                <input
+                  type="number"
+                  className="mapping-dataset-index-input"
+                  defaultValue={String(mapping.datasetIndex)}
+                  onChange={(e) => {
+                    const newMappings = [...excelMappings]
+                    newMappings[index] = {
+                      ...newMappings[index],
+                      datasetIndex: parseInt(e.target.value) || mapping.datasetIndex
+                    }
+                    setExcelMappings(newMappings)
+                  }}
+                  placeholder="Dataset #"
+                />
+                <button
+                  className="remove-mapping-btn"
+                  onClick={() => {
+                    const newMappings = excelMappings.filter(
+                      (_, i) => i !== index
+                    )
+                    setExcelMappings(newMappings)
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+
+            <button
+              className="add-mapping-btn"
+              onClick={() => {
+                const newMappings = [...excelMappings, {
+                  columnName: excelHeaders[0] || '',
+                  chartLabel: excelHeaders[0] || '',
+                  chartType: 'bar',
+                  datasetIndex: excelMappings.length
+                }]
+                setExcelMappings(newMappings)
+              }}
+            >
+              + Add Mapping
+            </button>
+          </div>
+
+          <button className="apply-mappings-btn" onClick={applyMappings}>
+            Apply Mappings
+          </button>
+        </div>
+      )}
 
       {/* Charts Grid */}
       <div className="charts-grid">
         {chartTypes.map((type) => (
           <div key={type} className="chart-item">
-            <ChartComponent type={type} data={{ labels: [], datasets: [] }} options={{}} excelHeaders={excelHeaders} />
+            <ChartComponent
+              type={type}
+              headers={excelHeaders}
+              rows={excelRows}
+              mappings={excelMappings}
+              excelHeaders={excelHeaders}
+            />
           </div>
         ))}
       </div>
     </div>
   )
+}
+
+const applyMappings = () => {
+  // Logic to apply the current mappings
+  setShowMappings(false)
 }
 
 export default Dashboard

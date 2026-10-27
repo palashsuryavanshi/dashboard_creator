@@ -2,22 +2,26 @@ import React, { useState, useRef, useEffect } from 'react'
 import ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
 
-interface ExcelRow {
-  [key: string]: any
+export interface ExcelColumnMapping {
+  columnName: string
+  chartLabel: string
+  chartType?: 'bar' | 'column' | 'line' | 'area' | 'pie' | 'doughnut' | 'funnel' | 'scatter'
+  datasetIndex?: number
 }
 
 export interface ExcelImportResult {
   success: boolean
   headers: string[]
-  rows: ExcelRow[]
+  rows: any[]
+  mappings: ExcelColumnMapping[]
   error?: string
-  onImport?: (result: ExcelImportResult) => void
 }
 
 export const ExcelReader = ({ onImport }: { onImport?: (result: ExcelImportResult) => void }) => {
   const [fileName, setFileName] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [importResult, setImportResult] = useState<ExcelImportResult | null>(null)
+  const [showMappings, setShowMappings] = useState<boolean>(false)
   const [showError, setShowError] = useState<boolean>(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -44,7 +48,7 @@ export const ExcelReader = ({ onImport }: { onImport?: (result: ExcelImportResul
         }
 
         const headers: string[] = []
-        const rows: ExcelRow[] = []
+        const rows: any[] = []
 
         // Get headers from first row
         worksheet.getRow(1).eachCell((cell, colNumber) => {
@@ -55,7 +59,7 @@ export const ExcelReader = ({ onImport }: { onImport?: (result: ExcelImportResul
         worksheet.eachRow((row, rowNumber) => {
           if (rowNumber === 1) return // Skip header row
 
-          const rowData: ExcelRow = {}
+          const rowData: any = {}
           row.eachCell((cell, colNumber) => {
             rowData[headers[colNumber - 1] || `Column ${colNumber}`] =
               cell.value !== null && cell.value !== undefined
@@ -65,14 +69,24 @@ export const ExcelReader = ({ onImport }: { onImport?: (result: ExcelImportResul
           rows.push(rowData)
         })
 
+        // Initialize default mappings - map first 2 columns to datasets
+        const defaultMappings: ExcelColumnMapping[] = headers.map((header, index) => ({
+          columnName: header,
+          chartLabel: header,
+          chartType: index < 2 ? 'bar' : undefined,
+          datasetIndex: index < 2 ? index : undefined,
+        }))
+
         const result: ExcelImportResult = {
           success: true,
           headers,
           rows,
+          mappings: defaultMappings,
         }
 
         setImportResult(result)
         setIsLoading(false)
+        setShowMappings(true)
         onImport && onImport(result)
       } catch (error) {
         console.error('Error reading Excel file:', error)
@@ -80,6 +94,7 @@ export const ExcelReader = ({ onImport }: { onImport?: (result: ExcelImportResul
           success: false,
           headers: [],
           rows: [],
+          mappings: [],
           error: error instanceof Error ? error.message : 'Failed to read Excel file',
         }
         setImportResult(errorResult)
@@ -95,6 +110,7 @@ export const ExcelReader = ({ onImport }: { onImport?: (result: ExcelImportResul
         success: false,
         headers: [],
         rows: [],
+        mappings: [],
         error: 'Failed to read the file',
       }
       setImportResult(errorResult)
@@ -110,10 +126,21 @@ export const ExcelReader = ({ onImport }: { onImport?: (result: ExcelImportResul
     setFileName('')
     setIsLoading(false)
     setImportResult(null)
+    setShowMappings(false)
     setShowError(false)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
+  }
+
+  const confirmMappings = (mappings: ExcelColumnMapping[]) => {
+    setShowMappings(false)
+    onImport && onImport({
+      success: importResult?.success || false,
+      headers: importResult?.headers || [],
+      rows: importResult?.rows || [],
+      mappings,
+    })
   }
 
   return (
@@ -145,6 +172,71 @@ export const ExcelReader = ({ onImport }: { onImport?: (result: ExcelImportResul
               <p>✅ Successfully imported <strong>{importResult.rows.length}</strong> rows</p>
               <p><strong>Columns:</strong> {importResult.headers.join(', ')}</p>
 
+              {/* Mapping Configuration */}
+              {showMappings && importResult.mappings.length > 0 && (
+                <div className="mapping-config">
+                  <h3>📋 Column Mapping</h3>
+                  <p>Map Excel columns to chart datasets:</p>
+                  <div className="mapping-grid">
+                    {importResult.mappings.map((mapping, index) => (
+                      <div key={index} className="mapping-item">
+                        <select
+                          className="mapping-select"
+                          defaultValue={mapping.columnName}
+                        >
+                          <option value="">-- Select Column --</option>
+                          {importResult.headers.map((header) => (
+                            <option key={header} value={header}>
+                              {header}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="text"
+                          className="mapping-label"
+                          defaultValue={mapping.chartLabel}
+                          placeholder="Label"
+                        />
+                        <select
+                          className="mapping-chart-type"
+                          defaultValue={mapping.chartType || 'bar'}
+                        >
+                          <option value="bar">Bar</option>
+                          <option value="column">Column</option>
+                          <option value="line">Line</option>
+                          <option value="area">Area</option>
+                          <option value="pie">Pie</option>
+                          <option value="doughnut">Doughnut</option>
+                        </select>
+                        <input
+                          type="number"
+                          className="mapping-dataset-index"
+                          defaultValue={mapping.datasetIndex !== undefined ? String(mapping.datasetIndex) : ''}
+                          placeholder="Dataset #"
+                        />
+                        <button
+                          className="remove-mapping-btn"
+                          onClick={() => {
+                            // Logic to remove mapping
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mapping-actions">
+                    <button className="cancel-mapping-btn" onClick={clearFile}>
+                      Cancel
+                    </button>
+                    <button className="confirm-mapping-btn" onClick={() => confirmMappings(importResult.mappings)}>
+                      Apply Mapping
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="sample-data">
                 <h3>Sample Data</h3>
                 <table>
@@ -160,7 +252,7 @@ export const ExcelReader = ({ onImport }: { onImport?: (result: ExcelImportResul
                       <tr key={index}>
                         {importResult.headers.map((header) => (
                           <td key={header}>{row[header] || ''}</td>
-                        ))}
+                        ))
                       </tr>
                     ))}
                   </tbody>
