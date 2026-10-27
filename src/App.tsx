@@ -247,7 +247,7 @@ const ChartComponent = ({
   rows: any[]
   mappings: ExcelColumnMapping[]
   excelHeaders: string[]
-}) => {
+}): JSX.Element => {
   const chartData = useChartData(type, headers, rows, mappings)
 
   return (
@@ -257,7 +257,7 @@ const ChartComponent = ({
           m.charAt(0).toUpperCase() + m.slice(1))
         } Chart</h3>
       <canvas
-        id="chartjs-{type}"
+        id={`chartjs-${type}`}
         width="400"
         height="200"
         data={chartData}
@@ -272,13 +272,13 @@ const ChartComponent = ({
       />
     </div>
   )
-})
+}
 
 const Dashboard = () => {
   const [excelImportResult, setExcelImportResult] = useState<ExcelImportResult | null>(null)
   const [excelHeaders, setExcelHeaders] = useState<string[]>([])
   const [excelRows, setExcelRows] = useState<any[]>([])
-  const [excelMappings, setExcelMappings] = useState<{ columnName: string; chartLabel: string; chartType: ChartType; datasetIndex: number }[]>([])
+  const [excelMappings, setExcelMappings] = useState<ExcelColumnMapping[]>([])
   const [showMappings, setShowMappings] = useState<boolean>(false)
 
   const chartTypes: ChartType[] = [
@@ -418,7 +418,7 @@ const Dashboard = () => {
             </button>
           </div>
 
-          <button className="apply-mappings-btn" onClick={applyMappings}>
+          <button className="apply-mappings-btn" onClick={() => setShowMappings(false)}>
             Apply Mappings
           </button>
         </div>
@@ -440,11 +440,6 @@ const Dashboard = () => {
       </div>
     </div>
   )
-}
-
-const applyMappings = () => {
-  // Logic to apply the current mappings
-  setShowMappings(false)
 }
 
 export default Dashboard

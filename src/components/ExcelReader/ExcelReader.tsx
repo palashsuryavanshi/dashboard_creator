@@ -239,7 +239,7 @@ export const ExcelReader = ({ onImport }: { onImport?: (result: ExcelImportResul
 
               <div className="sample-data">
                 <h3>Sample Data</h3>
-                <table>
+                <table className="sample-table">
                   <thead>
                     <tr>
                       {importResult.headers.map((header) => (
@@ -252,7 +252,7 @@ export const ExcelReader = ({ onImport }: { onImport?: (result: ExcelImportResul
                       <tr key={index}>
                         {importResult.headers.map((header) => (
                           <td key={header}>{row[header] || ''}</td>
-                        ))
+                        ))}
                       </tr>
                     ))}
                   </tbody>
