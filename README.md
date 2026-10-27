@@ -1,5 +1,7 @@
 # Dashboard Creator
 
+*still in development*
+
 A React-based dashboard creator application featuring **18 different chart types** and **Excel data import** functionality. Built with Vite, TypeScript, and Chart.js, deployable to GitHub Pages.
 
 ## 📊 Features
