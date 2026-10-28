@@ -29,8 +29,8 @@ import { ChartCard } from './components/ChartCard';
 import { ChartModal } from './components/ChartModal';
 
 export default function App() {
-  // Theme Mode: Dark vs Light (Default to sleek dark obsidian mode for that modern, cool, professional aesthetic)
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  // Light mode only
+  const isDarkMode = false;
 
   // Active Color Palette Theme
   const [activeTheme, setActiveTheme] = useState<ColorTheme>(COLOR_THEMES[0]);
@@ -317,92 +317,36 @@ export default function App() {
       }`}
     >
       {/* 1. Ultra-Sleek Modern Header */}
-      <header
-        className={`sticky top-0 z-30 border-b backdrop-blur-md transition-colors ${
-          isDarkMode
-            ? 'bg-[#0B0F17]/85 border-slate-800/80 shadow-md shadow-black/20'
-            : 'bg-white/90 border-slate-200/90 shadow-2xs'
-        }`}
-      >
+      <header className="sticky top-0 z-30 border-b border-emerald-700 bg-emerald-600 backdrop-blur-md shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md shadow-indigo-500/25"
-              style={{
-                background: `linear-gradient(135deg, ${activeTheme.borderPalette[0]}, ${activeTheme.borderPalette[1] || '#06b6d4'})`
-              }}
-            >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md shadow-emerald-900/30 bg-emerald-700">
               <BarChart3 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base font-extrabold tracking-tight">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-base font-extrabold tracking-tight text-white">
                   Dashboard Creator
                 </h1>
-                <span
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-2xs"
-                  style={{
-                    color: activeTheme.borderPalette[0],
-                    backgroundColor: `${activeTheme.borderPalette[0]}15`,
-                    borderColor: `${activeTheme.borderPalette[0]}35`
-                  }}
-                >
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/40 bg-white/15 text-white shadow-2xs">
                   18 Chart Types
                 </span>
+                <span className="text-xs text-white/90">
+                  created by{' '}
+                  <a
+                    href="https://in.linkedin.com/in/palashsuryavanshi"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold underline hover:text-white"
+                  >
+                    palashsuryavanshi
+                  </a>
+                </span>
               </div>
-              <p className={`text-xs hidden sm:block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className="text-xs hidden sm:block text-white/80">
                 Excel &amp; CSV Data Visualizer &bull; Custom Axis Binding &bull; Instant Charts
               </p>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Dark / Light Mode Toggle */}
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className={`p-2 rounded-xl border transition-colors cursor-pointer ${
-                isDarkMode
-                  ? 'bg-slate-800/80 border-slate-700 text-amber-300 hover:bg-slate-700'
-                  : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-
-            <button
-              onClick={() => handleLoadPreset(PRESET_DATASETS[0])}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
-                isDarkMode
-                  ? 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 text-slate-200'
-                  : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Load Sample</span>
-            </button>
-
-            <button
-              onClick={handleDownloadTemplate}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer hidden md:inline-flex ${
-                isDarkMode
-                  ? 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 text-slate-300'
-                  : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              }`}
-            >
-              <Download className="w-3.5 h-3.5 text-slate-400" />
-              <span>Template .xlsx</span>
-            </button>
-
-            <a
-              href="https://github.com/palashsuryavanshi/dashboard_creator"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold border border-slate-700/80 shadow-xs transition-colors"
-            >
-              <span>GitHub</span>
-              <ExternalLink className="w-3 h-3 text-slate-400" />
-            </a>
           </div>
         </div>
       </header>
@@ -474,6 +418,9 @@ export default function App() {
                 </div>
                 <div className={`text-[11px] mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                   Auto-detects headers, dates, and numeric measures
+                </div>
+                <div className={`text-[10px] mt-1 font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Note: 1st row should have the headers
                 </div>
               </div>
 
@@ -1017,21 +964,14 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer
-        className={`border-t py-6 text-center text-xs transition-colors ${
-          isDarkMode
-            ? 'bg-[#0B0F17] border-slate-800/80 text-slate-500'
-            : 'bg-white border-slate-200 text-slate-500'
-        }`}
-      >
+      <footer className="border-t border-emerald-700 bg-emerald-600 py-6 text-center text-xs text-white">
         <p>
-          Dashboard Creator &bull; Deployable to Vercel, Netlify &amp; GitHub Pages &bull;{' '}
+          Dashboard Creator &bull;{' '}
           <a
             href="https://github.com/palashsuryavanshi/dashboard_creator"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold hover:underline"
-            style={{ color: activeTheme.borderPalette[0] }}
+            className="font-semibold hover:underline text-white"
           >
             palashsuryavanshi/dashboard_creator
           </a>
