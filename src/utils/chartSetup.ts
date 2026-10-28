@@ -1,3 +1,4 @@
+import 'chart.js/auto';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,7 +12,14 @@ import {
   Tooltip,
   Legend,
   Filler,
-  ChartOptions
+  ChartOptions,
+  BarController,
+  LineController,
+  PieController,
+  DoughnutController,
+  RadarController,
+  PolarAreaController,
+  ScatterController
 } from 'chart.js';
 import { ChartDefinition, ChartType, ColorTheme } from '../types/dashboard';
 
@@ -27,7 +35,14 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  BarController,
+  LineController,
+  PieController,
+  DoughnutController,
+  RadarController,
+  PolarAreaController,
+  ScatterController
 );
 
 export const CHART_DEFINITIONS: ChartDefinition[] = [
