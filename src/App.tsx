@@ -18,7 +18,8 @@ import {
   Moon,
   Sun,
   Palette,
-  Check
+  Check,
+  Filter
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -57,6 +58,8 @@ export default function App() {
   const [previewPage, setPreviewPage] = useState<number>(1);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [maximizedDef, setMaximizedDef] = useState<ChartDefinition | null>(null);
+  const [filterText, setFilterText] = useState<string>('');
+  const [filterColumn, setFilterColumn] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -310,7 +313,7 @@ export default function App() {
   const peakCategory = labels[maxIdx] || 'N/A';
   const peakVal = primaryValues[maxIdx] || 0;
 
-  // Filtered preview rows
+  // Filtered preview rows (for data table)
   const filteredPreviewRows = rows.filter((r) => {
     if (!previewSearch) return true;
     return Object.values(r).some((v) =>
@@ -324,6 +327,15 @@ export default function App() {
     previewPage * pageSize
   );
 
+  // Data filter for charts (filter by column value)
+  const filteredChartRows = filterText && filterColumn
+    ? rows.filter((r) => {
+        const val = r[filterColumn];
+        if (val === undefined || val === null) return false;
+        return String(val).toLowerCase().includes(filterText.toLowerCase());
+      })
+    : rows;
+
   // Filter charts
   const displayedCharts = CHART_DEFINITIONS.filter((def) => {
     if (activeCategory !== 'all' && def.category !== activeCategory) return false;
@@ -331,6 +343,12 @@ export default function App() {
   });
 
   const axesSelected = Boolean(xAxisColumn && primaryYColumns.length > 0);
+
+  // Filtered labels for charts
+  const filteredLabels = filteredChartRows.map((r, i) => {
+    const val = r[xAxisColumn];
+    return val !== undefined && val !== null && val !== '' ? String(val) : `Item ${i + 1}`;
+  });
 
   const visibleCharts =
     selectedChart === 'all'
@@ -886,6 +904,70 @@ export default function App() {
 
         {axesSelected && (
         <div className="space-y-4">
+        {/* Data Filter Card */}
+        <div
+          className={`rounded-2xl border p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
+            isDarkMode
+              ? 'bg-[#111827]/90 border-slate-800/80'
+              : 'bg-white border-slate-200/90'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-indigo-400" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Filter Chart Data
+            </span>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <select
+              value={filterColumn}
+              onChange={(e) => setFilterColumn(e.target.value)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer ${
+                isDarkMode
+                  ? 'bg-slate-800 border-slate-700 text-slate-100'
+                  : 'bg-slate-50 border-slate-200 text-slate-800'
+              }`}
+            >
+              <option value="">-- Select Column --</option>
+              {headers.map((h) => (
+                <option key={h} value={h}>
+                  {h}
+                </option>
+              ))}
+            </select>
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Filter value..."
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                className={`pl-8 pr-3 py-1.5 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 border w-40 ${
+                  isDarkMode
+                    ? 'bg-slate-800 border-slate-700 text-slate-100'
+                    : 'bg-slate-50 border-slate-200 text-slate-800'
+                }`}
+              />
+            </div>
+            {filterText && filterColumn && (
+              <button
+                onClick={() => {
+                  setFilterText('');
+                  setFilterColumn('');
+                }}
+                className="px-2 py-1 text-xs font-semibold text-rose-500 hover:text-rose-700 rounded-lg border border-rose-200 hover:bg-rose-50"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {filterText && filterColumn && (
+            <div className="text-[10px] text-emerald-600 font-semibold">
+              Showing {filteredChartRows.length} of {rows.length} rows
+            </div>
+          )}
+        </div>
+
         {/* STEP 3: Generated Charts Section */}
           {/* Chart Filter & Modern Theme Palettes Bar */}
           <div
@@ -964,8 +1046,8 @@ export default function App() {
               <ChartCard
                 key={chart.id}
                 definition={chart}
-                labels={labels}
-                rows={rows}
+                labels={filteredLabels}
+                rows={filteredChartRows}
                 labelColumn={xAxisColumn}
                 valueColumns={primaryYColumns}
                 secondaryYColumn={secondaryYColumn}
