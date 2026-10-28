@@ -389,7 +389,7 @@ export default function App() {
             className={`lg:col-span-5 rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-colors ${
               isDarkMode
                 ? 'bg-[#111827]/90 border-slate-800/80'
-                : 'bg-gray-100 border-slate-200/90'
+                : 'bg-white border-slate-200/90'
             }`}
           >
             <div>
@@ -532,7 +532,7 @@ export default function App() {
             className={`lg:col-span-7 rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-colors ${
               isDarkMode
                 ? 'bg-[#111827]/90 border-slate-800/80'
-                : 'bg-gray-100 border-slate-200/90'
+                : 'bg-white border-slate-200/90'
             }`}
           >
             <div>
@@ -569,7 +569,7 @@ export default function App() {
                     className={`w-full px-3 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer border ${
                       isDarkMode
                         ? 'bg-slate-800 border-slate-700 text-slate-100'
-                        : 'bg-gray-100 border-slate-300 text-slate-800'
+                        : 'bg-white border-slate-300 text-slate-800'
                     }`}
                   >
                     {headers.map((h) => (
@@ -607,7 +607,7 @@ export default function App() {
                     className={`w-full px-3 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer border ${
                       isDarkMode
                         ? 'bg-slate-800 border-slate-700 text-slate-100'
-                        : 'bg-gray-100 border-slate-300 text-slate-800'
+                        : 'bg-white border-slate-300 text-slate-800'
                     }`}
                   >
                     <option value="">-- None (Single Axis) --</option>
@@ -657,7 +657,7 @@ export default function App() {
                               ? 'text-white shadow-xs font-semibold'
                               : isDarkMode
                               ? 'bg-slate-800/90 border border-slate-700 text-slate-300 hover:bg-slate-700'
-                              : 'bg-gray-100 border border-slate-300 text-slate-700 hover:bg-slate-100'
+                              : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
                           }`}
                           style={
                             isSelected
@@ -685,7 +685,7 @@ export default function App() {
             className={`rounded-2xl border p-5 shadow-xs space-y-3 animate-in fade-in duration-150 ${
               isDarkMode
                 ? 'bg-[#111827]/90 border-slate-800 text-slate-200'
-                : 'bg-gray-100 border-slate-200 text-slate-800'
+                : 'bg-white border-slate-200 text-slate-800'
             }`}
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -810,7 +810,7 @@ export default function App() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div
             className={`p-4 rounded-2xl border shadow-2xs transition-colors ${
-              isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-gray-100 border-slate-200'
+              isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-white border-slate-200'
             }`}
           >
             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -829,7 +829,7 @@ export default function App() {
 
           <div
             className={`p-4 rounded-2xl border shadow-2xs transition-colors ${
-              isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-gray-100 border-slate-200'
+              isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-white border-slate-200'
             }`}
           >
             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -848,7 +848,7 @@ export default function App() {
 
           <div
             className={`p-4 rounded-2xl border shadow-2xs transition-colors ${
-              isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-gray-100 border-slate-200'
+              isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-white border-slate-200'
             }`}
           >
             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -867,7 +867,7 @@ export default function App() {
 
           <div
             className={`p-4 rounded-2xl border shadow-2xs transition-colors ${
-              isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-gray-100 border-slate-200'
+              isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-white border-slate-200'
             }`}
           >
             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -890,7 +890,7 @@ export default function App() {
           {/* Chart Filter & Modern Theme Palettes Bar */}
           <div
             className={`p-3.5 sm:p-4 rounded-2xl border shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-colors ${
-              isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-gray-100 border-slate-200'
+              isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-white border-slate-200'
             }`}
           >
             {/* Chart selector dropdown */}
@@ -902,7 +902,7 @@ export default function App() {
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold border cursor-pointer ${
                   isDarkMode
                     ? 'bg-slate-800 border-slate-700 text-slate-100'
-                    : 'bg-gray-100 border-slate-300 text-slate-800'
+                    : 'bg-white border-slate-300 text-slate-800'
                 }`}
               >
                 <option value="">-- Select a chart --</option>
