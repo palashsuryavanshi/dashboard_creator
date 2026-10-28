@@ -342,7 +342,7 @@ export default function App() {
   return (
     <div
       className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
-        isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-[#F8FAFC] text-slate-900'
+        isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-gray-200 text-slate-900'
       }`}
     >
       {/* 1. Ultra-Sleek Modern Header */}
