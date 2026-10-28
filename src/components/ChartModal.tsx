@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Chart } from 'react-chartjs-2';
 import { X, Download, Table } from 'lucide-react';
-import { ChartDefinition, ColorTheme } from '../types/dashboard';
+import { ChartDefinition, ColorTheme, CustomTheme } from '../types/dashboard';
 import { buildChartConfig } from '../utils/chartSetup';
 
 interface ChartModalProps {
@@ -13,6 +13,7 @@ interface ChartModalProps {
   valueColumns: string[];
   secondaryYColumn?: string;
   theme: ColorTheme;
+  chartStyle?: CustomTheme['charts'];
   isDark?: boolean;
 }
 
@@ -25,6 +26,7 @@ export const ChartModal: React.FC<ChartModalProps> = ({
   valueColumns,
   secondaryYColumn,
   theme,
+  chartStyle,
   isDark = false
 }) => {
   if (!definition) return null;
@@ -39,7 +41,8 @@ export const ChartModal: React.FC<ChartModalProps> = ({
     valueColumns,
     secondaryYColumn,
     theme,
-    isDark
+    isDark,
+    chartStyle
   );
 
   const handleDownloadPng = () => {
@@ -62,6 +65,7 @@ export const ChartModal: React.FC<ChartModalProps> = ({
             ? 'bg-[#111827] border-slate-800 text-slate-100'
             : 'bg-white border-slate-200 text-slate-900'
         }`}
+        style={chartStyle ? { backgroundColor: chartStyle.chartBackground, borderColor: chartStyle.tooltipBorderColor } : undefined}
       >
         {/* Header */}
         <div
@@ -118,6 +122,7 @@ export const ChartModal: React.FC<ChartModalProps> = ({
                 ? 'bg-slate-900/50 border-slate-800'
                 : 'bg-white border-slate-100 shadow-2xs'
             }`}
+            style={chartStyle ? { backgroundColor: chartStyle.chartBackground, borderColor: chartStyle.tooltipBorderColor } : undefined}
           >
             <Chart
               ref={chartRef}

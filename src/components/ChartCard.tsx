@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Chart } from 'react-chartjs-2';
-import { Download, Maximize2, Layers } from 'lucide-react';
-import { ChartDefinition, ColorTheme } from '../types/dashboard';
+import { Download, Maximize2, Layers, Settings } from 'lucide-react';
+import { ChartDefinition, ColorTheme, CustomTheme } from '../types/dashboard';
 import { buildChartConfig } from '../utils/chartSetup';
 
 interface ChartCardProps {
@@ -12,6 +12,8 @@ interface ChartCardProps {
   valueColumns: string[];
   secondaryYColumn?: string;
   theme: ColorTheme;
+  chartStyle?: CustomTheme['charts'];
+  onCustomizeChart?: (chartId: string) => void;
   isDark?: boolean;
   onMaximize: (def: ChartDefinition) => void;
 }
@@ -24,6 +26,8 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   valueColumns,
   secondaryYColumn,
   theme,
+  chartStyle,
+  onCustomizeChart,
   isDark = false,
   onMaximize
 }) => {
@@ -37,7 +41,8 @@ export const ChartCard: React.FC<ChartCardProps> = ({
     valueColumns,
     secondaryYColumn,
     theme,
-    isDark
+    isDark,
+    chartStyle
   );
 
   const handleDownloadPng = () => {
@@ -96,7 +101,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
 
   return (
     <div
-      className={`rounded-2xl transition-all duration-200 flex flex-col overflow-hidden group ${
+      className={`custom-theme-card rounded-2xl transition-all duration-200 flex flex-col overflow-hidden group ${
         isDark
           ? 'bg-[#111827]/90 border border-slate-800/80 shadow-md hover:border-slate-700 hover:shadow-xl'
           : 'bg-white border border-slate-200/90 shadow-2xs hover:shadow-md'
@@ -104,7 +109,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
     >
       {/* Header */}
       <div
-        className={`px-4 py-3 border-b flex items-center justify-between gap-2 ${
+        className={`custom-theme-card-header px-4 py-3 border-b flex items-center justify-between gap-2 ${
           isDark
             ? 'bg-slate-900/60 border-slate-800/80'
             : 'bg-slate-50/70 border-slate-100'
@@ -136,6 +141,18 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
+          {onCustomizeChart && (
+            <button
+              type="button"
+              title={`Customize ${definition.title}`}
+              aria-label={`Customize ${definition.title}`}
+              onClick={() => onCustomizeChart?.(definition.id)}
+              className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-500 hover:border-indigo-300 hover:text-indigo-600"
+            >
+              <Settings className="h-3 w-3" />
+              Style
+            </button>
+          )}
           <button
             onClick={handleDownloadPng}
             title="Download PNG image"
@@ -162,7 +179,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
       </div>
 
       {/* Chart Canvas Area */}
-      <div className="p-4 flex-1 flex flex-col justify-center min-h-[250px] relative">
+      <div className="p-4 flex-1 flex flex-col justify-center min-h-[250px] relative" style={{ backgroundColor: chartStyle?.chartBackground }}>
         {definition.isMultiDatasetRecommended && valueColumns.length < 2 && (
           <div
             className={`mb-2 px-2.5 py-1 rounded-md flex items-center gap-1.5 text-[10px] font-medium border ${

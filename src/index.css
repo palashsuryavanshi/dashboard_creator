@@ -1,1 +1,40 @@
 @import "tailwindcss";
+
+.custom-theme-active .custom-theme-content .custom-theme-card {
+  background-color: var(--theme-card-background);
+  border-color: var(--theme-border-color);
+  border-radius: var(--theme-card-radius);
+}
+
+.custom-theme-active .custom-theme-content h2,
+.custom-theme-active .custom-theme-content h3,
+.custom-theme-active .custom-theme-content label,
+.custom-theme-active .custom-theme-content .custom-theme-card-header,
+.custom-theme-active .custom-theme-content strong {
+  color: var(--theme-text-color);
+}
+
+.custom-theme-active .custom-theme-content p,
+.custom-theme-active .custom-theme-content .custom-theme-card-header p,
+.custom-theme-active .custom-theme-content .text-slate-400,
+.custom-theme-active .custom-theme-content .text-slate-500 {
+  color: var(--theme-muted-text-color);
+}
+
+.custom-theme-active .custom-theme-content input,
+.custom-theme-active .custom-theme-content select,
+.custom-theme-active .custom-theme-content textarea {
+  border-color: var(--theme-border-color);
+}
+
+.custom-theme-active .custom-theme-footer {
+  color: var(--theme-text-color);
+}
+.custom-theme-active .custom-theme-header {
+  color: #fff;
+}
+.custom-theme-active .custom-theme-header h1,
+.custom-theme-active .custom-theme-header p,
+.custom-theme-active .custom-theme-header a {
+  color: #fff;
+}

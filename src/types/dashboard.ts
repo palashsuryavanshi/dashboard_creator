@@ -56,3 +56,35 @@ export interface ColorTheme {
   palette: string[];
   borderPalette: string[];
 }
+
+export interface CustomTheme {
+  name: string;
+  app: {
+    pageBackground: string;
+    headerBackground: string;
+    cardBackground: string;
+    textColor: string;
+    mutedTextColor: string;
+    borderColor: string;
+    accentColor: string;
+    fontFamily: string;
+    baseFontSize: number;
+    cardRadius: number;
+  };
+  charts: {
+    colors: string[];
+    chartBackground: string;
+    gridColor: string;
+    tickColor: string;
+    legendColor: string;
+    tooltipBackground: string;
+    tooltipTextColor: string;
+    tooltipBorderColor: string;
+    dataLabelColor: string;
+    dataLabelFontSize: number;
+    lineWidth: number;
+    pointRadius: number;
+  };
+}
+
+export type ChartThemeOverride = Partial<CustomTheme['charts']>;

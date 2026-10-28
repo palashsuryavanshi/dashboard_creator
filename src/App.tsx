@@ -19,11 +19,16 @@ import {
   Sun,
   Palette,
   Check,
-  Filter
+  Filter,
+  Settings,
+  X,
+  RotateCcw
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { ChartDefinition, ChartType, ColorTheme } from './types/dashboard';
+import { ChartDefinition, ChartType, ColorTheme, CustomTheme, ChartThemeOverride } from './types/dashboard';
+import { DEFAULT_CUSTOM_THEME, loadCustomTheme, saveCustomTheme } from './utils/customTheme';
+import { mergeChartTheme } from './utils/customTheme';
 import { CHART_DEFINITIONS, COLOR_THEMES } from './utils/chartSetup';
 import { PRESET_DATASETS, PresetDataset } from './data/sampleDatasets';
 import { ChartCard } from './components/ChartCard';
@@ -35,6 +40,16 @@ export default function App() {
 
   // Active Color Palette Theme
   const [activeTheme, setActiveTheme] = useState<ColorTheme>(COLOR_THEMES[0]);
+  const [savedTheme] = useState(() => loadCustomTheme(window.localStorage));
+  const [customTheme, setCustomTheme] = useState<CustomTheme>(savedTheme.theme);
+  const [chartOverrides, setChartOverrides] = useState<Record<string, ChartThemeOverride>>(savedTheme.chartOverrides);
+  const [isUsingCustom, setIsUsingCustom] = useState(savedTheme.enabled);
+  const [showThemeEditor, setShowThemeEditor] = useState(false);
+  const [editingUseCustom, setEditingUseCustom] = useState(savedTheme.enabled);
+  const [editingOverrides, setEditingOverrides] = useState<Record<string, ChartThemeOverride>>(savedTheme.chartOverrides);
+  const [editingTheme, setEditingTheme] = useState<CustomTheme>(savedTheme.theme);
+  const [editingChart, setEditingChart] = useState<string | null>(null);
+  const [editingChartStyle, setEditingChartStyle] = useState<CustomTheme['charts']>(savedTheme.theme.charts);
 
   // Data State
   const [fileName, setFileName] = useState<string>('');
@@ -344,6 +359,62 @@ export default function App() {
 
   const axesSelected = Boolean(xAxisColumn && primaryYColumns.length > 0);
 
+  const persistTheme = (theme: CustomTheme, overrides: Record<string, ChartThemeOverride>, enabled: boolean) => {
+    setCustomTheme(theme);
+    setChartOverrides(overrides);
+    setIsUsingCustom(enabled);
+    saveCustomTheme(window.localStorage, { theme, chartOverrides: overrides, enabled });
+  };
+
+  const effectivePalette: ColorTheme = isUsingCustom
+    ? { ...activeTheme, palette: customTheme.charts.colors.map((color) => `${color}c7`), borderPalette: customTheme.charts.colors }
+    : activeTheme;
+  const baseChartStyle: CustomTheme['charts'] = {
+    ...customTheme.charts,
+    colors: isUsingCustom ? customTheme.charts.colors : activeTheme.borderPalette,
+  };
+  const getChartStyle = (chartId: string) => isUsingCustom
+    ? mergeChartTheme(baseChartStyle, chartOverrides[chartId])
+    : chartOverrides[chartId]
+      ? mergeChartTheme(baseChartStyle, chartOverrides[chartId])
+      : undefined;
+
+  const openThemeEditor = (chartId?: string) => {
+    setEditingTheme(customTheme);
+    setEditingUseCustom(isUsingCustom);
+    setEditingOverrides(chartOverrides);
+    setEditingChart(chartId ?? null);
+    setEditingChartStyle(chartId ? getChartStyle(chartId) ?? baseChartStyle : baseChartStyle);
+    setShowThemeEditor(true);
+  };
+
+  const updateEditingApp = <K extends keyof CustomTheme['app']>(key: K, value: CustomTheme['app'][K]) => {
+    setEditingTheme((previous) => ({ ...previous, app: { ...previous.app, [key]: value } }));
+  };
+
+  const updateEditingCharts = <K extends keyof CustomTheme['charts']>(key: K, value: CustomTheme['charts'][K]) => {
+    setEditingTheme((previous) => ({ ...previous, charts: { ...previous.charts, [key]: value } }));
+  };
+
+  const applyThemeEditor = () => {
+    if (editingChart) {
+      const overrides = { ...chartOverrides };
+      const sparseOverride: ChartThemeOverride = {};
+      (Object.keys(baseChartStyle) as Array<keyof CustomTheme['charts']>).forEach((key) => {
+        const unchanged = key === 'colors'
+          ? JSON.stringify(editingChartStyle.colors) === JSON.stringify(baseChartStyle.colors)
+          : editingChartStyle[key] === baseChartStyle[key];
+        if (!unchanged) sparseOverride[key] = editingChartStyle[key] as never;
+      });
+      if (Object.keys(sparseOverride).length) overrides[editingChart] = sparseOverride;
+      else delete overrides[editingChart];
+      persistTheme(customTheme, overrides, isUsingCustom);
+    } else {
+      persistTheme(editingTheme, editingOverrides, editingUseCustom);
+    }
+    setShowThemeEditor(false);
+  };
+
   // Filtered labels for charts
   const filteredLabels = filteredChartRows.map((r, i) => {
     const val = r[xAxisColumn];
@@ -357,14 +428,30 @@ export default function App() {
       ? CHART_DEFINITIONS.filter((def) => def.id === selectedChart)
       : [];
 
+  const appThemeStyle = isUsingCustom ? {
+    '--theme-page-background': customTheme.app.pageBackground,
+    '--theme-header-background': customTheme.app.headerBackground,
+    '--theme-card-background': customTheme.app.cardBackground,
+    '--theme-text-color': customTheme.app.textColor,
+    '--theme-muted-text-color': customTheme.app.mutedTextColor,
+    '--theme-border-color': customTheme.app.borderColor,
+    '--theme-accent-color': customTheme.app.accentColor,
+    '--theme-card-radius': `${customTheme.app.cardRadius}px`,
+    backgroundColor: customTheme.app.pageBackground,
+    color: customTheme.app.textColor,
+    fontFamily: customTheme.app.fontFamily,
+    fontSize: `${customTheme.app.baseFontSize}px`,
+  } as React.CSSProperties : undefined;
+
   return (
     <div
       className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
         isDarkMode ? 'bg-[#0B0F17] text-slate-100' : 'bg-gray-200 text-slate-900'
-      }`}
+      } ${isUsingCustom ? 'custom-theme-active' : ''}`}
+      style={appThemeStyle}
     >
       {/* 1. Ultra-Sleek Modern Header */}
-      <header className="sticky top-0 z-30 border-b border-emerald-700 bg-emerald-600 backdrop-blur-md shadow-md">
+      <header className={`sticky top-0 z-30 border-b backdrop-blur-md shadow-md ${isUsingCustom ? 'custom-theme-header' : ''}`} style={isUsingCustom ? { backgroundColor: customTheme.app.headerBackground, borderColor: customTheme.app.borderColor, fontFamily: customTheme.app.fontFamily } : { backgroundColor: '#059669', borderColor: '#047857' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md shadow-emerald-900/30 bg-emerald-700">
@@ -395,16 +482,25 @@ export default function App() {
               </p>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => openThemeEditor()}
+            aria-label="Customize website and dashboard theme"
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+          >
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Customize theme</span>
+          </button>
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6 ${isUsingCustom ? 'custom-theme-content' : ''}`}>
         {/* Step 1 & 2 Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* STEP 1: Upload Excel / CSV */}
           <div
-            className={`lg:col-span-5 rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-colors ${
+            className={`custom-theme-card lg:col-span-5 rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-colors ${
               isDarkMode
                 ? 'bg-[#111827]/90 border-slate-800/80'
                 : 'bg-white border-slate-200/90'
@@ -415,7 +511,7 @@ export default function App() {
                 <div className="flex items-center gap-2">
                   <span
                     className="w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center text-white shadow-2xs"
-                    style={{ backgroundColor: activeTheme.borderPalette[0] }}
+                    style={{ backgroundColor: effectivePalette.borderPalette[0] }}
                   >
                     1
                   </span>
@@ -458,7 +554,7 @@ export default function App() {
                 />
                 <Upload
                   className="w-7 h-7 mx-auto mb-2"
-                  style={{ color: activeTheme.borderPalette[0] }}
+                  style={{ color: effectivePalette.borderPalette[0] }}
                 />
                 <div className="text-xs font-bold">
                   {isLoading ? 'Reading file...' : 'Click or drop .xlsx, .xls, or .csv'}
@@ -547,7 +643,7 @@ export default function App() {
 
           {/* STEP 2: Configure X-Axis & Y-Axes */}
           <div
-            className={`lg:col-span-7 rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-colors ${
+            className={`custom-theme-card lg:col-span-7 rounded-2xl border p-5 shadow-xs flex flex-col justify-between transition-colors ${
               isDarkMode
                 ? 'bg-[#111827]/90 border-slate-800/80'
                 : 'bg-white border-slate-200/90'
@@ -558,7 +654,7 @@ export default function App() {
                 <div className="flex items-center gap-2">
                   <span
                     className="w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center text-white shadow-2xs"
-                    style={{ backgroundColor: activeTheme.borderPalette[1] || activeTheme.borderPalette[0] }}
+                    style={{ backgroundColor: effectivePalette.borderPalette[1] || effectivePalette.borderPalette[0] }}
                   >
                     2
                   </span>
@@ -612,8 +708,8 @@ export default function App() {
                     <span
                       className="text-[9px] font-semibold px-1.5 py-0.2 rounded"
                       style={{
-                        color: activeTheme.borderPalette[1] || '#06b6d4',
-                        backgroundColor: `${activeTheme.borderPalette[1] || '#06b6d4'}20`
+                        color: effectivePalette.borderPalette[1] || '#06b6d4',
+                        backgroundColor: `${effectivePalette.borderPalette[1] || '#06b6d4'}20`
                       }}
                     >
                       Dual Axis
@@ -679,7 +775,7 @@ export default function App() {
                           }`}
                           style={
                             isSelected
-                              ? { backgroundColor: activeTheme.borderPalette[0] }
+                              ? { backgroundColor: effectivePalette.borderPalette[0] }
                               : undefined
                           }
                         >
@@ -700,7 +796,7 @@ export default function App() {
         {/* Collapsible Data Preview Table */}
         {axesSelected && showDataPreview && (
           <div
-            className={`rounded-2xl border p-5 shadow-xs space-y-3 animate-in fade-in duration-150 ${
+            className={`custom-theme-card rounded-2xl border p-5 shadow-xs space-y-3 animate-in fade-in duration-150 ${
               isDarkMode
                 ? 'bg-[#111827]/90 border-slate-800 text-slate-200'
                 : 'bg-white border-slate-200 text-slate-800'
@@ -827,7 +923,7 @@ export default function App() {
         {/* KPI Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div
-            className={`p-4 rounded-2xl border shadow-2xs transition-colors ${
+            className={`custom-theme-card p-4 rounded-2xl border shadow-2xs transition-colors ${
               isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-white border-slate-200'
             }`}
           >
@@ -836,7 +932,7 @@ export default function App() {
             </div>
             <div
               className="text-2xl font-black font-mono tracking-tight mt-1"
-              style={{ color: activeTheme.borderPalette[0] }}
+              style={{ color: effectivePalette.borderPalette[0] }}
             >
               {totalPrimary.toLocaleString()}
             </div>
@@ -846,7 +942,7 @@ export default function App() {
           </div>
 
           <div
-            className={`p-4 rounded-2xl border shadow-2xs transition-colors ${
+            className={`custom-theme-card p-4 rounded-2xl border shadow-2xs transition-colors ${
               isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-white border-slate-200'
             }`}
           >
@@ -855,7 +951,7 @@ export default function App() {
             </div>
             <div
               className="text-2xl font-black font-mono tracking-tight mt-1"
-              style={{ color: activeTheme.borderPalette[1] || activeTheme.borderPalette[0] }}
+              style={{ color: effectivePalette.borderPalette[1] || effectivePalette.borderPalette[0] }}
             >
               {avgPrimary.toFixed(1)}
             </div>
@@ -865,7 +961,7 @@ export default function App() {
           </div>
 
           <div
-            className={`p-4 rounded-2xl border shadow-2xs transition-colors ${
+            className={`custom-theme-card p-4 rounded-2xl border shadow-2xs transition-colors ${
               isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-white border-slate-200'
             }`}
           >
@@ -874,7 +970,7 @@ export default function App() {
             </div>
             <div
               className="text-2xl font-black font-mono tracking-tight mt-1"
-              style={{ color: activeTheme.borderPalette[2] || activeTheme.borderPalette[0] }}
+              style={{ color: effectivePalette.borderPalette[2] || effectivePalette.borderPalette[0] }}
             >
               {peakVal.toLocaleString()}
             </div>
@@ -884,7 +980,7 @@ export default function App() {
           </div>
 
           <div
-            className={`p-4 rounded-2xl border shadow-2xs transition-colors ${
+            className={`custom-theme-card p-4 rounded-2xl border shadow-2xs transition-colors ${
               isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-white border-slate-200'
             }`}
           >
@@ -894,7 +990,7 @@ export default function App() {
             <div className="text-xs font-bold mt-1 truncate">
               X: <span className="font-mono">{xAxisColumn}</span>
             </div>
-            <div className="text-[11px] font-medium truncate mt-0.5" style={{ color: activeTheme.borderPalette[0] }}>
+            <div className="text-[11px] font-medium truncate mt-0.5" style={{ color: effectivePalette.borderPalette[0] }}>
               Y: <span className="font-mono">{primaryYColumns.join(', ')}</span>
             </div>
           </div>
@@ -906,7 +1002,7 @@ export default function App() {
         <div className="space-y-4">
         {/* Data Filter Card */}
         <div
-          className={`rounded-2xl border p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
+          className={`custom-theme-card rounded-2xl border p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
             isDarkMode
               ? 'bg-[#111827]/90 border-slate-800/80'
               : 'bg-white border-slate-200/90'
@@ -971,7 +1067,7 @@ export default function App() {
         {/* STEP 3: Generated Charts Section */}
           {/* Chart Filter & Modern Theme Palettes Bar */}
           <div
-            className={`p-3.5 sm:p-4 rounded-2xl border shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-colors ${
+            className={`custom-theme-card p-3.5 sm:p-4 rounded-2xl border shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-colors ${
               isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-white border-slate-200'
             }`}
           >
@@ -1005,11 +1101,11 @@ export default function App() {
               </span>
               <div className="flex items-center gap-1.5">
                 {COLOR_THEMES.map((th) => {
-                  const isSelected = activeTheme.id === th.id;
+                  const isSelected = !isUsingCustom && activeTheme.id === th.id;
                   return (
                     <button
                       key={th.id}
-                      onClick={() => setActiveTheme(th)}
+                      onClick={() => { setActiveTheme(th); setIsUsingCustom(false); saveCustomTheme(window.localStorage, { theme: customTheme, chartOverrides, enabled: false }); }}
                       title={th.name}
                       className={`px-2.5 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer ${
                         isSelected
@@ -1051,7 +1147,9 @@ export default function App() {
                 labelColumn={xAxisColumn}
                 valueColumns={primaryYColumns}
                 secondaryYColumn={secondaryYColumn}
-                theme={activeTheme}
+                theme={effectivePalette}
+                chartStyle={getChartStyle(chart.id)}
+                onCustomizeChart={openThemeEditor}
                 isDark={isDarkMode}
                 onMaximize={(def) => setMaximizedDef(def)}
               />
@@ -1062,7 +1160,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-emerald-700 bg-emerald-600 py-6 text-center text-xs text-white">
+      <footer className={`border-t py-6 text-center text-xs text-white ${isUsingCustom ? 'custom-theme-footer' : 'border-emerald-700 bg-emerald-600'}`} style={isUsingCustom ? { backgroundColor: customTheme.app.headerBackground, borderColor: customTheme.app.borderColor, fontFamily: customTheme.app.fontFamily } : undefined}>
         <p>
           Dashboard Creator &bull;{' '}
           <a
@@ -1076,6 +1174,67 @@ export default function App() {
         </p>
       </footer>
 
+      {showThemeEditor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowThemeEditor(false); }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="theme-editor-title" className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6" style={{ color: editingTheme.app.textColor, backgroundColor: editingTheme.app.cardBackground, borderColor: editingTheme.app.borderColor, fontFamily: editingTheme.app.fontFamily, borderRadius: editingTheme.app.cardRadius }}>
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div>
+                <h2 id="theme-editor-title" className="text-lg font-bold">{editingChart ? `Customize ${CHART_DEFINITIONS.find((item) => item.id === editingChart)?.title ?? 'chart'}` : 'Customize dashboard theme'}</h2>
+                <p className="mt-1 text-xs text-slate-500">Changes are saved when you apply them.</p>
+              </div>
+              <button type="button" aria-label="Close theme editor" onClick={() => setShowThemeEditor(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X className="h-4 w-4" /></button>
+            </div>
+            {!editingChart ? (
+              <div className="space-y-6">
+                <fieldset className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <legend className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Website and dashboard</legend>
+                  {([
+                    ['Page background', 'pageBackground'], ['Header background', 'headerBackground'], ['Card background', 'cardBackground'], ['Text', 'textColor'], ['Muted text', 'mutedTextColor'], ['Borders', 'borderColor'], ['Accent', 'accentColor'],
+                  ] as const).map(([label, key]) => (
+                    <label key={key} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 text-xs font-medium">
+                      {label}<input aria-label={label} type="color" value={editingTheme.app[key]} onChange={(event) => updateEditingApp(key, event.target.value)} className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent" />
+                    </label>
+                  ))}
+                  <label className="text-xs font-medium">Font family<input aria-label="Font family" value={editingTheme.app.fontFamily} onChange={(event) => updateEditingApp('fontFamily', event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5" /></label>
+                  <label className="text-xs font-medium">Base font size<input aria-label="Base font size" type="number" min="10" max="24" value={editingTheme.app.baseFontSize} onChange={(event) => updateEditingApp('baseFontSize', Math.min(24, Math.max(10, Number(event.target.value))))} className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5" /></label>
+                  <label className="text-xs font-medium">Card corner radius<input aria-label="Card corner radius" type="range" min="0" max="32" value={editingTheme.app.cardRadius} onChange={(event) => updateEditingApp('cardRadius', Number(event.target.value))} className="mt-2 w-full" /><span className="text-slate-500">{editingTheme.app.cardRadius}px</span></label>
+                </fieldset>
+                <fieldset className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <legend className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Charts, axes, labels and tooltips</legend>
+                  {([
+                    ['Chart background', 'chartBackground'], ['Grid', 'gridColor'], ['Axis labels', 'tickColor'], ['Legend', 'legendColor'], ['Tooltip background', 'tooltipBackground'], ['Tooltip text', 'tooltipTextColor'], ['Tooltip border', 'tooltipBorderColor'], ['Data labels', 'dataLabelColor'],
+                  ] as const).map(([label, key]) => (
+                    <label key={key} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 text-xs font-medium">
+                      {label}<input aria-label={label} type="color" value={editingTheme.charts[key]} onChange={(event) => updateEditingCharts(key, event.target.value)} className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent" />
+                    </label>
+                  ))}
+                  <label className="text-xs font-medium">Chart series palette (comma-separated hex colors)<input aria-label="Chart series palette" value={editingTheme.charts.colors.join(', ')} onChange={(event) => { const colors = event.target.value.split(',').map((value) => value.trim()).filter((value) => /^#[0-9a-f]{6}$/i.test(value)); if (colors.length) updateEditingCharts('colors', colors.slice(0, 12)); }} className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5" /></label>
+                  <label className="text-xs font-medium">Data label size<input aria-label="Data label size" type="number" min="8" max="24" value={editingTheme.charts.dataLabelFontSize} onChange={(event) => updateEditingCharts('dataLabelFontSize', Math.min(24, Math.max(8, Number(event.target.value))))} className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5" /></label>
+                  <label className="text-xs font-medium">Line width<input aria-label="Line width" type="range" min="1" max="8" value={editingTheme.charts.lineWidth} onChange={(event) => updateEditingCharts('lineWidth', Number(event.target.value))} className="mt-2 w-full" /><span className="text-slate-500">{editingTheme.charts.lineWidth}px</span></label>
+                  <label className="text-xs font-medium">Point radius<input aria-label="Point radius" type="range" min="0" max="12" value={editingTheme.charts.pointRadius} onChange={(event) => updateEditingCharts('pointRadius', Number(event.target.value))} className="mt-2 w-full" /><span className="text-slate-500">{editingTheme.charts.pointRadius}px</span></label>
+                </fieldset>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {(['colors', 'chartBackground', 'gridColor', 'tickColor', 'legendColor', 'tooltipBackground', 'tooltipTextColor', 'tooltipBorderColor', 'dataLabelColor'] as const).map((key) => (
+                  <label key={key} className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 p-3 text-xs font-medium">{key.replace(/([A-Z])/g, ' $1')}<input aria-label={key} type="color" value={key === 'colors' ? editingChartStyle.colors[0] : editingChartStyle[key]} onChange={(event) => setEditingChartStyle((previous) => ({ ...previous, [key]: key === 'colors' ? [event.target.value, ...previous.colors.slice(1)] : event.target.value }))} className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent" /></label>
+                ))}
+                <label className="text-xs font-medium">Data label size<input aria-label="Chart data label size" type="number" min="8" max="24" value={editingChartStyle.dataLabelFontSize} onChange={(event) => setEditingChartStyle((previous) => ({ ...previous, dataLabelFontSize: Math.min(24, Math.max(8, Number(event.target.value))) }))} className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5" /></label>
+                <label className="text-xs font-medium">Line width<input aria-label="Chart line width" type="range" min="1" max="8" value={editingChartStyle.lineWidth} onChange={(event) => setEditingChartStyle((previous) => ({ ...previous, lineWidth: Number(event.target.value) }))} className="mt-2 w-full" /></label>
+                <label className="text-xs font-medium">Point radius<input aria-label="Chart point radius" type="range" min="0" max="12" value={editingChartStyle.pointRadius} onChange={(event) => setEditingChartStyle((previous) => ({ ...previous, pointRadius: Number(event.target.value) }))} className="mt-2 w-full" /></label>
+                <button type="button" onClick={() => setEditingChartStyle(baseChartStyle)} className="self-center text-xs font-semibold text-rose-600 hover:underline">Reset this chart to global theme</button>
+              </div>
+            )}
+            <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
+              {!editingChart && <button type="button" onClick={() => { setEditingTheme(DEFAULT_CUSTOM_THEME); setEditingUseCustom(true); setEditingOverrides({}); }} className="mr-auto inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"><RotateCcw className="h-3.5 w-3.5" />Reset theme</button>}
+              {!editingChart && <button type="button" onClick={() => setEditingUseCustom(false)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Use preset palette</button>}
+              <button type="button" onClick={() => setShowThemeEditor(false)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
+              <button type="button" onClick={applyThemeEditor} className="rounded-lg px-4 py-2 text-xs font-bold text-white" style={{ backgroundColor: editingTheme.app.accentColor }}>Apply changes</button>
+            </div>
+          </section>
+        </div>
+      )}
+
       {/* Chart Maximize Modal */}
       {maximizedDef && (
         <ChartModal
@@ -1086,7 +1245,8 @@ export default function App() {
           labelColumn={xAxisColumn}
           valueColumns={primaryYColumns}
           secondaryYColumn={secondaryYColumn}
-          theme={activeTheme}
+          theme={effectivePalette}
+          chartStyle={getChartStyle(maximizedDef.id)}
           isDark={isDarkMode}
         />
       )}

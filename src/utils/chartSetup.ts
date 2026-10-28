@@ -12,7 +12,6 @@ import {
   Tooltip,
   Legend,
   Filler,
-  ChartOptions,
   BarController,
   LineController,
   PieController,
@@ -21,7 +20,8 @@ import {
   PolarAreaController,
   ScatterController
 } from 'chart.js';
-import { ChartDefinition, ChartType, ColorTheme } from '../types/dashboard';
+import type { ChartOptions } from 'chart.js';
+import type { ChartDefinition, ChartType, ColorTheme, CustomTheme } from '../types/dashboard.ts';
 
 // Register Chart.js components
 ChartJS.register(
@@ -300,7 +300,8 @@ export const buildChartConfig = (
   valueColumns: string[],
   secondaryYColumn: string | undefined,
   theme: ColorTheme,
-  isDark: boolean = false
+  isDark: boolean = false,
+  chartStyle?: CustomTheme['charts']
 ): ChartConfigData => {
   const activeValueCols = valueColumns.length > 0 ? valueColumns : ['Value'];
 
@@ -324,13 +325,81 @@ export const buildChartConfig = (
       })
     : [];
 
+  const customStyle = chartStyle;
+  const palette = customStyle?.colors;
+  const colorToRgba = (color: string) => {
+    const hex = color.slice(1);
+    const normalized = hex.length === 3 ? hex.split('').map((digit) => digit + digit).join('') : hex;
+    return `rgba(${parseInt(normalized.slice(0, 2), 16)}, ${parseInt(normalized.slice(2, 4), 16)}, ${parseInt(normalized.slice(4, 6), 16)}, 0.78)`;
+  };
+  const fillColor = (index: number) => palette?.length
+    ? colorToRgba(palette[index % palette.length])
+    : theme.palette[index % theme.palette.length];
+  const strokeColor = (index: number) => palette?.length ? palette[index % palette.length] : theme.borderPalette[index % theme.borderPalette.length];
   const baseFont = {
     family: "'Inter', system-ui, -apple-system, sans-serif",
-    size: 11
+    size: customStyle?.dataLabelFontSize ?? 11
   };
 
-  const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.65)';
-  const tickColor = isDark ? '#94a3b8' : '#64748b';
+  const gridColor = customStyle?.gridColor ?? (isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.65)');
+  const tickColor = customStyle?.tickColor ?? (isDark ? '#94a3b8' : '#64748b');
+  const applyChartStyle = (config: ChartConfigData): ChartConfigData => {
+    if (!customStyle) return config;
+    config.data.datasets = config.data.datasets.map((dataset: any, index: number) => {
+      const colorByDatum = Array.isArray(dataset.backgroundColor);
+      const paletteBackground = colorByDatum
+        ? dataset.backgroundColor.map((_: unknown, colorIndex: number) => fillColor(colorIndex))
+        : fillColor(index);
+      const paletteBorder = Array.isArray(dataset.borderColor)
+        ? dataset.borderColor.map((_: unknown, colorIndex: number) => strokeColor(colorIndex))
+        : config.chartJsType === 'pie' || config.chartJsType === 'doughnut' || config.chartJsType === 'polarArea'
+          ? dataset.borderColor
+          : strokeColor(index);
+      const datasetType = dataset.type ?? config.chartJsType;
+      return {
+        ...dataset,
+        backgroundColor: paletteBackground,
+        borderColor: paletteBorder,
+        borderWidth: customStyle.lineWidth,
+        pointRadius: datasetType === 'line' || datasetType === 'scatter' || datasetType === 'radar' ? customStyle.pointRadius : dataset.pointRadius,
+        pointHoverRadius: datasetType === 'line' || datasetType === 'scatter' || datasetType === 'radar'
+          ? Math.max(customStyle.pointRadius + 2, 4)
+          : dataset.pointHoverRadius,
+        ...(Array.isArray(dataset.pointBackgroundColor) ? {
+          pointBackgroundColor: dataset.pointBackgroundColor.map((_: unknown, colorIndex: number) => strokeColor(colorIndex)),
+        } : {}),
+      };
+    });
+    const plugins = (config.options.plugins ?? {}) as any;
+    config.options.plugins = {
+      ...plugins,
+      legend: {
+        ...plugins.legend,
+        labels: { ...plugins.legend?.labels, color: customStyle.legendColor, font: baseFont },
+      },
+      tooltip: {
+        ...plugins.tooltip,
+        backgroundColor: customStyle.tooltipBackground,
+        titleColor: customStyle.tooltipTextColor,
+        bodyColor: customStyle.tooltipTextColor,
+        borderColor: customStyle.tooltipBorderColor,
+        borderWidth: 1,
+      },
+    };
+    if (config.options.scales) {
+      const scales = config.options.scales as Record<string, any>;
+      for (const scale of Object.values(scales)) {
+        if (scale && typeof scale === 'object') {
+          scale.grid = { ...scale.grid, color: customStyle.gridColor };
+          scale.ticks = { ...scale.ticks, color: customStyle.tickColor, font: baseFont };
+          if (scale.title) scale.title = { ...scale.title, color: customStyle.tickColor, font: baseFont };
+          if (scale.pointLabels) scale.pointLabels = { ...scale.pointLabels, color: customStyle.tickColor, font: baseFont };
+          if (scale.title) scale.title = { ...scale.title, color: customStyle.tickColor, font: baseFont };
+        }
+      }
+    }
+    return config;
+  };
 
   const defaultScales = {
     x: {
@@ -344,6 +413,7 @@ export const buildChartConfig = (
     }
   };
 
+  const buildConfig = (): ChartConfigData => {
   switch (type) {
     case 'column': {
       return {
@@ -1033,4 +1103,6 @@ export const buildChartConfig = (
         options: { responsive: true, maintainAspectRatio: false }
       };
   }
+  };
+  return applyChartStyle(buildConfig());
 };
