@@ -36,9 +36,9 @@ export default function App() {
   const [activeTheme, setActiveTheme] = useState<ColorTheme>(COLOR_THEMES[0]);
 
   // Data State
-  const [fileName, setFileName] = useState<string>('sample-sales-data.xlsx');
-  const [headers, setHeaders] = useState<string[]>(PRESET_DATASETS[0].headers);
-  const [rows, setRows] = useState<Record<string, any>[]>(PRESET_DATASETS[0].rows);
+  const [fileName, setFileName] = useState<string>('');
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [rows, setRows] = useState<Record<string, any>[]>([]);
   const [availableSheets, setAvailableSheets] = useState<string[]>([]);
   const [activeSheet, setActiveSheet] = useState<string>('');
   const [cachedWorkbook, setCachedWorkbook] = useState<ExcelJS.Workbook | null>(null);
@@ -46,11 +46,9 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Axis Selection State
-  const [xAxisColumn, setXAxisColumn] = useState<string>(PRESET_DATASETS[0].labelColumn);
-  const [primaryYColumns, setPrimaryYColumns] = useState<string[]>(
-    PRESET_DATASETS[0].valueColumns.slice(0, 2)
-  );
-  const [secondaryYColumn, setSecondaryYColumn] = useState<string>('Operating Expenses ($k)');
+  const [xAxisColumn, setXAxisColumn] = useState<string>('');
+  const [primaryYColumns, setPrimaryYColumns] = useState<string[]>([]);
+  const [secondaryYColumn, setSecondaryYColumn] = useState<string>('');
 
   // UI Controls
   const [showDataPreview, setShowDataPreview] = useState<boolean>(false);
@@ -273,7 +271,7 @@ export default function App() {
   };
 
   // KPI Calculations
-  const primaryMetric = primaryYColumns[0] || headers[1] || headers[0];
+  const primaryMetric = primaryYColumns[0] || headers[1] || headers[0] || 'Metric';
   const primaryValues: number[] = rows.map((r) => {
     const val = r[primaryMetric];
     if (typeof val === 'number') return isNaN(val) ? 0 : val;
