@@ -633,29 +633,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Quick Presets Bar */}
-            <div
-              className={`mt-4 pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-xs ${
-                isDarkMode ? 'border-slate-800/80 text-slate-400' : 'border-slate-100 text-slate-500'
-              }`}
-            >
-              <span>Sample Datasets:</span>
-              <div className="flex flex-wrap gap-1.5">
-                {PRESET_DATASETS.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => handleLoadPreset(p)}
-                    className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
-                      isDarkMode
-                        ? 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700'
-                    }`}
-                  >
-                    {p.badge}
-                  </button>
-                ))}
-              </div>
-            </div>
+
           </div>
         </div>
 
