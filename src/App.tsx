@@ -52,6 +52,7 @@ export default function App() {
 
   // UI Controls
   const [showDataPreview, setShowDataPreview] = useState<boolean>(false);
+  const [selectedChart, setSelectedChart] = useState<string>('');
   const [previewSearch, setPreviewSearch] = useState<string>('');
   const [previewPage, setPreviewPage] = useState<number>(1);
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -307,6 +308,15 @@ export default function App() {
     if (activeCategory !== 'all' && def.category !== activeCategory) return false;
     return true;
   });
+
+  const axesSelected = Boolean(xAxisColumn && primaryYColumns.length > 0);
+
+  const visibleCharts =
+    selectedChart === 'all'
+      ? CHART_DEFINITIONS
+      : selectedChart
+      ? CHART_DEFINITIONS.filter((def) => def.id === selectedChart)
+      : [];
 
   return (
     <div
@@ -638,7 +648,7 @@ export default function App() {
         </div>
 
         {/* Collapsible Data Preview Table */}
-        {showDataPreview && (
+        {axesSelected && showDataPreview && (
           <div
             className={`rounded-2xl border p-5 shadow-xs space-y-3 animate-in fade-in duration-150 ${
               isDarkMode
@@ -762,6 +772,8 @@ export default function App() {
           </div>
         )}
 
+        {axesSelected && (
+        <>
         {/* KPI Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div
@@ -837,43 +849,38 @@ export default function App() {
             </div>
           </div>
         </div>
+        </>
+        )}
 
-        {/* STEP 3: Generated Charts Section */}
+        {axesSelected && (
         <div className="space-y-4">
+        {/* STEP 3: Generated Charts Section */}
           {/* Chart Filter & Modern Theme Palettes Bar */}
           <div
             className={`p-3.5 sm:p-4 rounded-2xl border shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-colors ${
               isDarkMode ? 'bg-[#111827]/90 border-slate-800/80' : 'bg-white border-slate-200'
             }`}
           >
-            {/* Category tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
-              {[
-                { id: 'all', label: 'All 18 Charts' },
-                { id: 'bar-column', label: 'Bar & Column (8)' },
-                { id: 'line-area', label: 'Line & Area (4)' },
-                { id: 'combo', label: 'Combo (2)' },
-                { id: 'specialty', label: 'Specialty & Radial (6)' }
-              ].map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                    activeCategory === cat.id
-                      ? 'text-white shadow-xs'
-                      : isDarkMode
-                      ? 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                  style={
-                    activeCategory === cat.id
-                      ? { backgroundColor: activeTheme.borderPalette[0] }
-                      : undefined
-                  }
-                >
-                  {cat.label}
-                </button>
-              ))}
+            {/* Chart selector dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-400">Chart:</span>
+              <select
+                value={selectedChart}
+                onChange={(e) => setSelectedChart(e.target.value)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border cursor-pointer ${
+                  isDarkMode
+                    ? 'bg-slate-800 border-slate-700 text-slate-100'
+                    : 'bg-white border-slate-300 text-slate-800'
+                }`}
+              >
+                <option value="">-- Select a chart --</option>
+                <option value="all">All Charts</option>
+                {CHART_DEFINITIONS.map((def) => (
+                  <option key={def.id} value={def.id}>
+                    {def.title}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Modern Palette Selector */}
@@ -921,7 +928,7 @@ export default function App() {
 
           {/* Charts Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {displayedCharts.map((chart) => (
+            {visibleCharts.map((chart) => (
               <ChartCard
                 key={chart.id}
                 definition={chart}
@@ -937,6 +944,7 @@ export default function App() {
             ))}
           </div>
         </div>
+        )}
       </main>
 
       {/* Footer */}
