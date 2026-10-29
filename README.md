@@ -1,4 +1,4 @@
-# 📊 Dashboard Creator
+# Dashboard Creator
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
@@ -7,26 +7,26 @@
 [![GitHub Pages](https://img.shields.io/badge/Deploy-GitHub%20Pages-222222?logo=githubpages&logoColor=white)](https://palashsuryavanshi.github.io/dashboard_creator/)
 [![License](https://img.shields.io/badge/License-ISC-green.svg)](./LICENSE)
 
-> Turn any Excel (`.xlsx`/`.xls`) or CSV file into **20 interactive charts** in seconds.  
+> Turn any Excel (`.xlsx`/`.xls`) or CSV file into **20 interactive charts** in seconds.
 > Upload data, bind your axes, pick a chart (or all of them), and explore your numbers instantly.
 
 ---
 
-## ✨ Highlights
+## Highlights
 
-- **20 chart types** — Bar, Stacked/Clustered variants, Line, Area, Combo, Funnel, Scatter (XY), Pie & Doughnut, Radar, Polar Area
-- **Smart Excel/CSV import** — auto-detects headers from the first row, supports multiple sheets
-- **Reactive axis binding** — choose X-axis, primary & secondary Y-axes; charts update live
-- **Chart picker** — display a single chart or all 20 at once (none shown by default)
-- **KPI strip** — totals, averages, peaks and active axis configuration
+- **20 chart types** - Bar, Stacked/Clustered variants, Line, Area, Combo, Funnel, Scatter (XY), Pie & Doughnut, Radar, Polar Area
+- **Smart Excel/CSV import** - auto-detects headers from the first row, supports multiple sheets
+- **Reactive axis binding** - choose X-axis, primary & secondary Y-axes; charts update live
+- **Chart picker** - display a single chart or all 20 at once (none shown by default)
+- **KPI strip** - totals, averages, peaks and active axis configuration
 - **5 color themes** + emerald accent palette, fully light-mode UI
-- **Export anywhere** — download any chart as PNG, or your data as CSV
-- **Reset in one click** — clear the loaded sheet and start over
-- **Responsive** — works on desktop and tablet screens
+- **Export anywhere** - download any chart as PNG, or your data as CSV
+- **Reset in one click** - clear the loaded sheet and start over
+- **Responsive** - works on desktop and tablet screens
 
 ---
 
-## 🌿 Branches
+## Branches
 
 | Branch | Description |
 |--------|-------------|
@@ -47,7 +47,7 @@ Then open http://localhost:5173/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - [Node.js](https://nodejs.org) 18 or newer
@@ -69,7 +69,7 @@ Make sure the **first row of your spreadsheet contains column headers**. All sub
 
 ---
 
-## 🛠️ Available scripts
+## Available scripts
 
 | Command | Description |
 |---------|-------------|
@@ -81,13 +81,13 @@ Make sure the **first row of your spreadsheet contains column headers**. All sub
 
 ---
 
-## 📦 Build for production
+## Build for production
 
 ```bash
 npm run build
 ```
 
-The optimized bundle is written to `dist/`.  
+The optimized bundle is written to `dist/`.
 For GitHub Pages served from the `main` branch root, copy the build output to the repo root:
 
 ```bash
@@ -97,32 +97,32 @@ npm run build
 
 ---
 
-## 🗂️ Project structure
+## Project structure
 
 ```
 dashboard_creator/
-├── src/
-│   ├── App.tsx                 # Main dashboard component
-│   ├── index.css               # Tailwind entry
-│   ├── main.tsx                # React entry point
-│   ├── components/
-│   │   ├── ChartCard.tsx       # Chart rendering card
-│   │   ├── ChartModal.tsx      # Full-screen chart view
-│   │   ├── ExcelReader/        # Excel/CSV import & mapping
-│   │   └── ...
-│   ├── data/                   # Sample datasets
-│   ├── types/                  # TypeScript types
-│   └── utils/                  # Chart.js setup & config builder
-├── index.html                  # Production entry (built, at repo root)
-├── src/index.html              # Development entry (Vite root)
-├── vite.config.ts
-├── package.json
-└── README.md
+|-- src/
+|   |-- App.tsx                 # Main dashboard component
+|   |-- index.css               # Tailwind entry
+|   |-- main.tsx                # React entry point
+|   |-- components/
+|   |   |-- ChartCard.tsx       # Chart rendering card
+|   |   |-- ChartModal.tsx      # Full-screen chart view
+|   |   |-- ExcelReader/        # Excel/CSV import & mapping
+|   |   +-- ...
+|   |-- data/                   # Sample datasets
+|   |-- types/                  # TypeScript types
+|   +-- utils/                  # Chart.js setup & config builder
+|-- index.html                  # Production entry (built, at repo root)
+|-- src/index.html              # Development entry (Vite root)
+|-- vite.config.ts
+|-- package.json
++-- README.md
 ```
 
 ---
 
-## 🧪 Tech stack
+## Tech stack
 
 - **React 19** + **TypeScript** + **Vite 8**
 - **Chart.js 4** + **react-chartjs-2** for rendering all 20 chart types
@@ -132,7 +132,7 @@ dashboard_creator/
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/my-feature`
@@ -144,7 +144,7 @@ Please keep `main` and `experimental` READMEs in sync when adding features.
 
 ---
 
-## 📄 License
+## License
 
-Released under the [ISC License](https://opensource.org/licenses/ISC).  
-Created by [Palash Suryavanshi](https://in.linkedin.com/in/palashsuryavanshi) · [GitHub](https://github.com/palashsuryavanshi/dashboard_creator)
+Released under the [ISC License](https://opensource.org/licenses/ISC).
+Created by [Palash Suryavanshi](https://in.linkedin.com/in/palashsuryavanshi) | [GitHub](https://github.com/palashsuryavanshi/dashboard_creator)
