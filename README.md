@@ -5,10 +5,13 @@
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
 [![Chart.js](https://img.shields.io/badge/Chart.js-4-FF6384?logo=chartdotjs&logoColor=white)](https://www.chartjs.org)
 [![GitHub Pages](https://img.shields.io/badge/Deploy-GitHub%20Pages-222222?logo=githubpages&logoColor=white)](https://palashsuryavanshi.github.io/dashboard_creator/)
-[![License](https://img.shields.io/badge/License-ISC-green.svg)](./LICENSE)
+[![License](https://img.shields.io/badge/License-Unlicense-publicdomain.svg)](./LICENSE)
+
+**Live Web:** https://palashsuryavanshi.github.io/dashboard_creator/
 
 > Turn any Excel (`.xlsx`/`.xls`) or CSV file into **20 interactive charts** in seconds.
 > Upload data, bind your axes, pick a chart (or all of them), and explore your numbers instantly.
+> Try it now on the [Live Web app](https://palashsuryavanshi.github.io/dashboard_creator/) - no install needed.
 
 ---
 
@@ -146,5 +149,7 @@ Please keep `main` and `experimental` READMEs in sync when adding features.
 
 ## License
 
-Released under the [ISC License](https://opensource.org/licenses/ISC).
+No copyright. This project is released into the **public domain** under [The Unlicense](https://unlicense.org) (see [LICENSE](./LICENSE)).
+Anyone can use, modify, and distribute it for any purpose, commercial or non-commercial, without permission.
+
 Created by [Palash Suryavanshi](https://in.linkedin.com/in/palashsuryavanshi) | [GitHub](https://github.com/palashsuryavanshi/dashboard_creator)
